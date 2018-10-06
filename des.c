@@ -86,6 +86,7 @@ int main(void)
             text_index++;
         } while(!(char)(output[7] << 4));
 
+    }
 
     return 0;
 }
