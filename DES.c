@@ -1,10 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
 
+#define ENCRYPT 0
+#define DECRYPT 1
 
-
-unsigned long long key;
-unsigned long long text;
-unsigned long long *roundKeys;
 int stables[8][4][16] = 
 {
   {
@@ -111,6 +110,106 @@ int PC2[48] = {
 };
 int keyshifts[16] = {1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1 };
 
+unsigned long long roundKeys[16];
+
+unsigned long long perm(int *permArray, unsigned long long input);
+unsigned long long switchHalves(unsigned long long input);
+unsigned long long DESround(unsigned long long input, int round);
+void setKeySchedule(unsigned long long key);
+
+
 int main(int argc, char **argv) {
+    if(argc != 4)
+      return -1;
+    unsigned long long key = strtoull(argv[1], NULL, 10);
+    unsigned long long input = strtoull(argv[2], NULL, 10);
+    unsigned long long mode = strtoull(argv[3], NULL, 10);
+    unsigned long long output = 0LL;
+    
+    setKeySchedule(key);
+    for(int i = 0; i < 16; i++)
+        printf("Round %i %llu\n", i, roundKeys[i]);
+    if(mode == DECRYPT) {
+        // Decrypt
+    }
+    if(mode == ENCRYPT) {
+        // Encrypt
+       output = perm(IP, input);
+        
+        for(int i=0; i<16; i++)
+            output = DESround(output, i);
+        
+        output = switchHalves(input);
+        
+        output = perm(IPInv, output);
+        
+        printf("Encrypted: %llu\n", output);
+    }
+    
     return 0;
+}
+
+
+unsigned long long DESround(unsigned long long input, int round) {
+  //  unsigned long long res;
+  //  
+  //  unsigned long long left = (4294967295LL << 32 & input);
+ //   unsigned long long right = (4294967295LL & input);
+ //   
+  //  right = perm(E, right);
+   
+return 0LL;   
+}
+
+void setKeySchedule(unsigned long long key) {
+
+    key = perm(PC1, key);
+    unsigned long long newkey = 0LL;
+    for(int i = 0; i < 16; i++) {
+
+        newkey |= (134217727LL & key) << keyshifts[i];
+
+        unsigned long long bit = ((1LL << 63) & key) == 0 ? 0LL : 1LL;
+
+
+        newkey |= (134217727LL << 27 & key) << keyshifts[i];
+        
+        newkey |= (bit << 28);
+
+        roundKeys[i] = perm(PC2, key);
+    }
+}
+
+unsigned long long cyclicLeftShift(unsigned long long input, int bitsToShift) {
+    return ((input) & (1LL << bitsToShift)) != 0 ? (input << 1) | 1 : (input << 1);
+}
+
+unsigned long long switchHalves(unsigned long long input) {
+    
+    unsigned long long res = 0LL;
+    
+    res |= ((4294967295LL << 32 & input) >> 32);
+    res |= ((4294967295LL & input) << 32);
+    
+    return res;
+    
+}
+
+unsigned long long perm(int *permArray, unsigned long long input) {
+
+    int i;
+    unsigned long long res = 0LL;
+    int len = sizeof(permArray) / sizeof(int);
+    
+    
+    for (i=0; i<len; i++) {
+
+        // This is the ith bit of the output.
+        unsigned long long bit = ((1LL << permArray[i]) & input) == 0 ? 0LL : 1LL;
+
+        // Place that particular bit in location i.
+        res |= (bit << i);
+    }
+
+    return res;
 }
